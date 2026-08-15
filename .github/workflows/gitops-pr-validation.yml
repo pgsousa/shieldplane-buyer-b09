@@ -1,0 +1,24 @@
+name: GitOps PR validation
+on:
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Validate governed GitOps change
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject malformed diffs
+        run: git diff --check "origin/${{ github.base_ref }}...HEAD"
+      - name: Require a GitOps manifest change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -E '^gitops/.+\.ya?ml$' >/dev/null

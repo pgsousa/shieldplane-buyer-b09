@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sp-b09-oom
+  namespace: oom-test
+  labels:
+    app: sp-b09-oom
+    shieldplane.io/e2e-scenario: oom-killed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sp-b09-oom
+  template:
+    metadata:
+      labels:
+        app: sp-b09-oom
+    spec:
+      containers:
+        - name: eater
+          image: python:3.11-slim
+          command: ["python", "-c"]
+          args:
+            - |
+              import time
+              blob = bytearray(40 * 1024 * 1024)
+              while True:
+                  time.sleep(60)
+          resources:
+            requests:
+              memory: 16Mi
+              cpu: 10m
+            limits:
+              memory: "32Mi"
+              cpu: 100m
