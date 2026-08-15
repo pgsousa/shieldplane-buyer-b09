@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sp-b09-oom
+  namespace: oom-test
+  labels:
+    app: sp-b09-oom
+    shieldplane.io/e2e-scenario: oom-killed
+  annotations:
+    argocd.argoproj.io/tracking-id: b09-prod:apps/Deployment:oom-test/sp-b09-oom
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: sp-b09-oom
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: sp-b09-oom
+    spec:
+      containers:
+      - args:
+        - "import time\nblob = bytearray(40 * 1024 * 1024)\nwhile True:\n    time.sleep(60)\n"
+        command:
+        - python
+        - -c
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+        name: eater
+        resources:
+          limits:
+            cpu: 100m
+            memory: "64Mi"
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
